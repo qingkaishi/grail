@@ -81,4 +81,5 @@ configure.out
 
 /.ptp-sync/
 .ptp-sync-*
-
+*.o
+grail
