@@ -1,5 +1,5 @@
 CC	= g++
-CPPFLAGS= -Wno-deprecated -O3 -c
+CPPFLAGS= -g -Wno-deprecated -O3 -c -std=c++11
 LDFLAGS	= -O3 
 SOURCES	= main.cpp Graph.cpp GraphUtil.cpp Grail.cpp TCSEstimator.cpp 
 OBJECTS	= $(SOURCES:.cpp=.o) interval_tree.o

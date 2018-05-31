@@ -153,7 +153,7 @@ static void parse_args(int argc, char *argv[]){
 	}
 	if(!testfilename){
 		cout << "Please provide a test file : -test <testfilename> " << endl;
-		exit(0);
+	//	exit(0);
 	}
 }
 
@@ -273,7 +273,7 @@ int main(int argc, char* argv[]) {
 	int source, target;
 	int reachable = 0, nonreachable =0;
 		
-	for (sit = src.begin(), tit = trg.begin(), lit = labels.begin();sit != src.end(); ++sit, ++tit, ++lit) {
+	for (sit = src.begin(), tit = trg.begin(), lit = labels.begin();sit != src.end(); ++sit, ++tit/*, ++lit*/) {
 			if(!SKIPSCC){
 				s = sccmap[*sit];
 				t = sccmap[*tit];
@@ -301,26 +301,26 @@ int main(int argc, char* argv[]) {
 				case -6: r = grail.bidirectionalReachPP_lf(s,t,el); break;
 			}
 
-			if(r==true) {
-				reachable++;
-   	      if(*lit == 0) {
+	//		if(r==true) {
+	//			reachable++;
+   	      //if(*lit == 0) {
 //            	cout << "False positive pair = " << s << " " << t << " " << *lit << endl;
 //							cout << "Levels : " << s << "->" << g[s].top_level << " " << t << "->" << g[t].top_level << endl;
-            	fail++;
-         	} else {
-						success++;
-					}
-      	}
-      	else {
-				nonreachable++;
-         	if(*lit == 1) {
+            	//fail++;
+         	//} else {
+		//				success++;
+		//			}
+      	//}
+      	//else {
+	//			nonreachable++;
+         //	if(*lit == 1) {
 //            	cout << "False negative pair = " << s << " " << t << " " << *lit << endl;
-            	fail++;
-         	}
-         	else   success++;
-			}
+           // 	fail++;
+         //	}
+         //	else   success++;
+	//		}
 		}	
-		cout << "Success Rate " << success << "/" << success+fail << endl;
+	//	cout << "Success Rate " << success << "/" << success+fail << endl;
 
 	gettimeofday(&after_time, NULL);
 	query_time = (after_time.tv_sec - before_time.tv_sec)*1000.0 + 

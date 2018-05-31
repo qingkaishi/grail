@@ -97,6 +97,7 @@ void Graph::readGraph(istream& in) {
 	while (getline(in, buf)) {
 		strTrimRight(buf);
 		idx = buf.find(":");
+                 sid = std::stoi(buf.substr(0, idx));
 		buf.erase(0, idx+2);
 		while (buf.find(" ") != string::npos) {
 			sub = buf.substr(0, buf.find(" "));
@@ -109,7 +110,7 @@ void Graph::readGraph(istream& in) {
 
 			addEdge(sid, tid);
 		}
-		++sid;
+		//++sid;
 	}
 }	
 
