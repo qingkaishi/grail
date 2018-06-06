@@ -74,6 +74,7 @@ class Graph {
 		GRA graph;
 		VertexList vl;
 		int vsize;
+		std::map<std::pair<int, int>, int> label_map;
 		
 	public:
 		Graph();
@@ -81,13 +82,14 @@ class Graph {
 		Graph(GRA&, VertexList&);
 		Graph(istream&);
 		~Graph();
+		int get_label(int e_src, int e_dst);
 		bool contains(int src, int trg,int dim);
 		bool incrementalContains(int src, int trg, int cur);
 		void readGraph(istream&);
 		void writeGraph(ostream&);
 		void printGraph();
 		void addVertex(int);
-		void addEdge(int, int);
+		void addEdge(int, int, int); // src. dst. label
 		int num_vertices();
 		int num_edges();
 		VertexList& vertices();

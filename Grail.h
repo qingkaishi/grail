@@ -9,6 +9,7 @@ or their institutions liable under any circumstances.
 
 #include "GraphUtil.h"
 #include "exception_list.h"
+#include "PushPopCache.h"
 
 // test switch
 #define _TEST_
@@ -25,6 +26,8 @@ class Grail {
 		bool POOL;
 		int POOLSIZE;
 		unsigned int PositiveCut, NegativeCut, TotalCall, TotalDepth, CurrentDepth;
+
+		CFLStack LabelStack;
 	public:
 		Grail(Graph& graph, int dim);
 		Grail(Graph& graph, int dim, int labelingType, bool POOL, int POOLSIZE);
