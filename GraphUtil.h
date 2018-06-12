@@ -18,6 +18,7 @@ public:
     static void topological_sort(Graph g, vector<int>& ts);
     static void tarjan(Graph& g, int vid, int& index, hash_map< int, pair<int,int> >& order, vector<int>& sn,
             multimap<int, int>& sccmap, int& scc);
+    static int kosaraju(Graph& g, multimap<int,int>& sccmap);
     static void mergeSCC(Graph& g, int* on, vector<int>& ts);
     static void traverse(Graph& tree, int vid, int& pre_post, vector<bool>& visited);
     static void pre_post_labeling(Graph& tree);

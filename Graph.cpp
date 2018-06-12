@@ -130,13 +130,16 @@ void Graph::readGraph(istream& in) {
             istringstream(sub) >> tid;
             buf.erase(0, buf.find(" ")+1);
             if(sid == tid)
-                cout << "Self-edge " << sid << endl;
-            if(tid < 0 || tid > n)
-                cout << "Wrong tid " << tid << endl;
+                cout << "Self-edge " << sid << "                \r";
+            if(tid < 0 || tid > n) {
+                cout << "Wrong tid " << tid << "                " << endl;
+                exit(1);
+            }
 
             addEdge(sid, tid, lid);
         }
     }
+    cout << endl;
 }	
 
 void Graph::writeGraph(ostream& out) {

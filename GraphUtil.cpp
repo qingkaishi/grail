@@ -119,9 +119,82 @@ void GraphUtil::tarjan(Graph& g, int vid, int& index, hash_map< int, pair<int,in
     //	cout << " outside tarjan "<< endl;
 }
 
+int GraphUtil::kosaraju(Graph& g, multimap<int,int>& sccmap) {
+    int origsize = g.num_vertices();
+
+    // first dfs
+    std::stack<int> out_stack;
+
+    auto first_dfs = [&g, &out_stack](int i){
+        g[i].visited = true;
+        std::stack<std::pair<int, int>> in_stack;
+        in_stack.emplace(i, 0);
+        while (!in_stack.empty()) {
+            auto n_v = in_stack.top();
+            in_stack.pop();
+            if (n_v.second < g.out_edges(n_v.first).size()) {
+                in_stack.emplace(n_v.first, n_v.second + 1);
+                int j = g.out_edges(n_v.first)[n_v.second];
+                if (!g[j].visited) {
+                    in_stack.emplace(j, 0);
+                    g[j].visited = true;
+                }
+            } else {
+                out_stack.push(n_v.first);
+            }
+        }
+    };
+
+    for (int vid = 0; vid < origsize; vid++) {
+        printf("First Round DFS: %d%%                                         \r", ((vid + 1)*100) / origsize);
+
+        if (g[vid].visited)
+            continue;
+        first_dfs(vid);
+    }
+    printf("\n");
+
+    // second dfs
+    int scc_num = 0;
+    auto second_dfs = [&g, &sccmap, &scc_num](int i) {
+        if (!g[i].visited) {
+            return;
+        }
+
+        g[i].visited = false;
+        std::stack<int> in_stack;
+        in_stack.push(i);
+        while (!in_stack.empty()) {
+            int n = in_stack.top();
+            in_stack.pop();
+            sccmap.insert(std::make_pair(n, scc_num));
+            for (int j : g.in_edges(n)) {
+                if (g[j].visited) {
+                    in_stack.push(j);
+                    g[j].visited = false;
+                }
+            }
+        }
+        scc_num++;
+    };
+
+    size_t stack_size = out_stack.size();
+    while (!out_stack.empty()) {
+        int i = out_stack.top();
+        out_stack.pop();
+        printf("Second Round DFS: %d%%                                         \r", ((stack_size-out_stack.size())*100) / stack_size);
+        second_dfs(i);
+    }
+    printf("\n");
+
+    return scc_num;
+}
+
 // merge Strongly Connected Component
 // return vertex map between old vertex and corresponding new merged vertex
 void GraphUtil::mergeSCC(Graph& g, int* on, vector<int>& reverse_topo_sort) {
+
+    /* computing scc using tarjan's alg. a recursive implementation. may cause stack overflow for huge graphs
     vector<int> sn;
     hash_map< int, pair<int, int> > order;
     int ind = 0;
@@ -129,14 +202,20 @@ void GraphUtil::mergeSCC(Graph& g, int* on, vector<int>& reverse_topo_sort) {
     int scc = 0;
     int vid;
     int origsize = g.num_vertices();
-    //	cout << " inside MergeSCC "<< endl;
     for (int i = 0; i < origsize; i++) {
         vid = i;
         if (g[vid].visited)
             continue;
         tarjan(g, vid, ind, order, sn, sccmap, scc);
     }
-    //	cout << " inside MergeSCC after tarjan "<< endl;
+    */
+
+    /* Kosaraju's alg for computing scc. an iterative implementation */
+    int origsize = g.num_vertices();
+    multimap<int, int> sccmap;  // each vertex id correspond with a scc num
+    int scc = kosaraju(g, sccmap);
+    cout << "# origsz : " << origsize << "; # scc : " << scc << endl;
+
     // no component need to merge
     if (scc == origsize) {
         for (int i = 0; i < origsize; i++)
