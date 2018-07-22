@@ -174,14 +174,15 @@ int main(int argc, char* argv[]) {
     }
 
     Graph g(infile);
+    infile.close();
     cout << "#vertex size:" << g.num_vertices() << "\t#edges size:" << g.num_edges() << endl;
 
-    int s, t;
+    int s, t, num_reachable = 0;
     int left = 0;
     int gsize = g.num_vertices();
 
     bool r;
-    struct timeval after_time, before_time, after_timepart, before_timepart;
+    struct timeval after_time, before_time;
 
 
     int *sccmap;
@@ -198,11 +199,6 @@ int main(int argc, char* argv[]) {
                 (after_time.tv_usec - before_time.tv_usec)*1.0/1000.0;
         cout << "merging time:" << query_time << " (ms)" << endl;
         cout << "#DAG vertex size:" << g.num_vertices() << "\t#DAG edges size:" << g.num_edges() << endl;
-
-        //		g.printGraph();
-        //		ofstream outSCC("scc.out");
-        //		g.writeGraph(outSCC);
-        //		outSCC.close();
     }
 
     GraphUtil::topo_leveler(g);
@@ -239,10 +235,7 @@ int main(int argc, char* argv[]) {
 
 
     gettimeofday(&before_time, NULL);
-
-    int dimension ;
-    Grail grail(g,DIM,LABELINGTYPE,POOL,POOLSIZE);
-
+    Grail grail(g, DIM, LABELINGTYPE, POOL, POOLSIZE);
     grail.set_level_filter(LEVEL_FILTER);
     gettimeofday(&after_time, NULL);
 
@@ -250,13 +243,10 @@ int main(int argc, char* argv[]) {
             (after_time.tv_usec - before_time.tv_usec)*1.0/1000.0;
     cout << "#construction time:" << labeling_time << " (ms)" << endl;
 
-
     ExceptionList * el = NULL;
     exceptionlist_time = 0;
     if(UseExceptions){
         gettimeofday(&before_time, NULL);
-        // el = new ExceptionListIncrementalPlus(g,DIM,LEVEL_FILTER);	 			// filtering by levels doesnot help inside exceptionlists construction
-        //		cout << "UP TO HERE OK" << endl;
         el = new ExceptionListIncrementalPlus(g,DIM,0);
         gettimeofday(&after_time, NULL);
         exceptionlist_time = (after_time.tv_sec - before_time.tv_sec)*1000.0 +
@@ -267,27 +257,15 @@ int main(int argc, char* argv[]) {
     // process queries
     cout << "process queries..." << endl;
     gettimeofday(&before_time, NULL);
-    gettimeofday(&before_timepart, NULL);
-    int seenpositive = 0;
-
-    int source, target;
-    int reachable = 0, nonreachable =0;
 
     for (sit = src.begin(), tit = trg.begin(), lit = labels.begin();sit != src.end(); ++sit, ++tit/*, ++lit*/) {
-        if(!SKIPSCC){
+        if (!SKIPSCC) {
             s = sccmap[*sit];
             t = sccmap[*tit];
-        }else{
+        } else {
             s = *sit;
             t = *tit;
         }
-
-        //			if(grail.bidirectionalReach(s,t,el) != grail.reach(s,t,el)){
-        //					cout << "Conflict 1 " << s <<" " << t <<  endl;
-        //			}
-        //			if(grail.bidirectionalReachPP(s,t,el) != grail.reachPP(s,t,el)){
-        //					cout << "Conflict 2 " << s <<" " << t <<  endl;
-        //			}
 
         switch(alg_type){
         case 1: r = grail.reach(s,t,el); break; // Default
@@ -300,27 +278,9 @@ int main(int argc, char* argv[]) {
         case -3: r = grail.bidirectionalReachPP(s,t,el); break;
         case -6: r = grail.bidirectionalReachPP_lf(s,t,el); break;
         }
-
-        //		if(r==true) {
-        //			reachable++;
-        //if(*lit == 0) {
-        //            	cout << "False positive pair = " << s << " " << t << " " << *lit << endl;
-        //							cout << "Levels : " << s << "->" << g[s].top_level << " " << t << "->" << g[t].top_level << endl;
-        //fail++;
-        //} else {
-        //				success++;
-        //			}
-        //}
-        //else {
-        //			nonreachable++;
-        //	if(*lit == 1) {
-        //            	cout << "False negative pair = " << s << " " << t << " " << *lit << endl;
-        // 	fail++;
-        //	}
-        //	else   success++;
-        //		}
+        if (r)
+            num_reachable++;
     }
-    //	cout << "Success Rate " << success << "/" << success+fail << endl;
 
     gettimeofday(&after_time, NULL);
     query_time = (after_time.tv_sec - before_time.tv_sec)*1000.0 +
@@ -346,22 +306,31 @@ int main(int argc, char* argv[]) {
     case -6: alg_name= "GRAIL*BILF"; LEVEL_FILTER=true;  break;
     }
 
-    if(grail.PositiveCut==0)
+    if (grail.PositiveCut == 0)
         grail.PositiveCut = 1;
 
     int totalIndexSize;
-    if(alg_type < 0){
-        totalIndexSize=gsize*DIM*3;
-    }else{
-        totalIndexSize=gsize*DIM*2;
+    if (alg_type < 0) {
+        totalIndexSize = gsize * DIM * 3;
+    } else {
+        totalIndexSize = gsize * DIM * 2;
     }
-    if(LEVEL_FILTER){
-        totalIndexSize+=gsize;
+    if (LEVEL_FILTER) {
+        totalIndexSize += gsize;
     }
-    if(UseExceptions){
-        totalIndexSize+=el->Size();
+    if (UseExceptions) {
+        totalIndexSize += el->Size();
     }
 
-
-    cout << "COMPAR: " << alg_name << DIM << "\t" << labeling_time + exceptionlist_time << "\t" << query_time << "\t" <<  totalIndexSize << "\t" << print_mem_usage()  << "\t" << grail.TotalCall << "\t" << grail.PositiveCut << "\t" << grail.NegativeCut << "\t" << reachable << "\t AvgCut:" << (grail.TotalDepth/grail.PositiveCut) << endl;
+    cout << "COMPAR: "
+            << alg_name << DIM << "\t"
+            << labeling_time + exceptionlist_time << "\t"
+            << query_time << "\t"
+            << totalIndexSize << "\t"
+            << print_mem_usage() << "\t"
+            << grail.TotalCall << "\t"
+            << grail.PositiveCut << "\t"
+            << grail.NegativeCut << "\t"
+            << num_reachable << "\t"
+            << "AvgCut:" << (grail.TotalDepth/grail.PositiveCut) << endl;
 }

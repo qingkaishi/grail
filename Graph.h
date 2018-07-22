@@ -30,7 +30,7 @@ struct Vertex {
 	int id;
 	int top_level;	// topological level
 	int min_parent_level;	// level of the highest parent in top_order
-	int topo_id;	// topological order
+	// int topo_id;	// topological order
 	int min_int;
 	long volume;
 	double adj_vol;

@@ -32,12 +32,14 @@ protected:
 
 	std::vector<size_t> SizeStack;
 	std::vector<Item> LabelVector;
+	size_t CallingDepth;
 
 public:
 	CFLStack() {
 	    // push a base
 	    LabelVector.emplace_back(-1, 1, 0, 0);
 	    LabelVector.emplace_back(0, 2, 1, 0);
+	    CallingDepth = 0;
 	}
 
 	virtual ~CFLStack() {
@@ -50,6 +52,8 @@ public:
 
 	        int CurSize = LabelVector.size();
 	        LabelVector.emplace_back(CurSize - 1, CurSize + 1, CurSize, 0);
+
+	        CallingDepth++;
 	    } else {
 	        // N < 0
 	        if (LabelVector[LabelVector.back().PrevIndex].Label <= 0) {
@@ -58,6 +62,8 @@ public:
 
 	            int CurSize = LabelVector.size();
 	            LabelVector.emplace_back(CurSize - 1, CurSize + 1, CurSize, 0);
+
+	            CallingDepth++;
 	        } else {
 	            // need to match
 	            Item& Label2MatchItem = LabelVector[LabelVector.back().PrevIndex];
@@ -70,6 +76,8 @@ public:
 
 	                LabelVector.back().PrevIndex = LabelVector[Label2MatchItem.PrevIndex].SelfIndex;
 	                LabelVector[Label2MatchItem.PrevIndex].NextIndex = CurSize;
+
+	                CallingDepth--;
 	            } else {
 	                // cannot match
 	                return false;
@@ -102,7 +110,9 @@ public:
 		    CurrTopItem.Label = 0;
 
 		    if (LabelVector[PopedItem.PrevIndex].SelfIndex == LabelVector.size() - 1) {
+		        CallingDepth--;
 		    } else {
+		        CallingDepth++;
 		        LabelVector[PopedItem.PrevIndex].NextIndex = LabelVector[CurrTopItem.PrevIndex].SelfIndex;
 		    }
 		}
@@ -114,10 +124,15 @@ public:
 
         LabelVector.emplace_back(-1, 1, 0, 0);
         LabelVector.emplace_back(0, 2, 1, 0);
+        CallingDepth = 0;
 	}
 
 	bool empty() const {
 		return LabelVector.size() == 2 && LabelVector[1].Label == 0;
+	}
+
+	size_t callingDepth() const {
+	    return CallingDepth;
 	}
 };
 

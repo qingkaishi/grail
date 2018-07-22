@@ -167,7 +167,7 @@ int GraphUtil::kosaraju(Graph& g, multimap<int,int>& sccmap) {
         while (!in_stack.empty()) {
             int n = in_stack.top();
             in_stack.pop();
-            sccmap.insert(std::make_pair(n, scc_num));
+            sccmap.insert(std::make_pair(scc_num, n));
             for (int j : g.in_edges(n)) {
                 if (g[j].visited) {
                     in_stack.push(j);
@@ -194,25 +194,25 @@ int GraphUtil::kosaraju(Graph& g, multimap<int,int>& sccmap) {
 // return vertex map between old vertex and corresponding new merged vertex
 void GraphUtil::mergeSCC(Graph& g, int* on, vector<int>& reverse_topo_sort) {
 
-    /* computing scc using tarjan's alg. a recursive implementation. may cause stack overflow for huge graphs
-    vector<int> sn;
-    hash_map< int, pair<int, int> > order;
-    int ind = 0;
-    multimap<int, int> sccmap;	// each vertex id correspond with a scc num
-    int scc = 0;
-    int vid;
-    int origsize = g.num_vertices();
-    for (int i = 0; i < origsize; i++) {
-        vid = i;
-        if (g[vid].visited)
-            continue;
-        tarjan(g, vid, ind, order, sn, sccmap, scc);
-    }
-    */
+    /* computing scc using tarjan's alg. a recursive implementation. may cause stack overflow for huge graphs */
+//    vector<int> sn;
+//    hash_map< int, pair<int, int> > order;
+//    int ind = 0;
+//    multimap<int, int> sccmap;	// scc id -> vertex id
+//    int scc = 0;
+//    int vid;
+//    int origsize = g.num_vertices();
+//    for (int i = 0; i < origsize; i++) {
+//        vid = i;
+//        if (g[vid].visited)
+//            continue;
+//        tarjan(g, vid, ind, order, sn, sccmap, scc);
+//    }
+
 
     /* Kosaraju's alg for computing scc. an iterative implementation */
     int origsize = g.num_vertices();
-    multimap<int, int> sccmap;  // each vertex id correspond with a scc num
+    multimap<int, int> sccmap;  // scc id -> vertex id
     int scc = kosaraju(g, sccmap);
     cout << "# origsz : " << origsize << "; # scc : " << scc << endl;
 
@@ -220,12 +220,13 @@ void GraphUtil::mergeSCC(Graph& g, int* on, vector<int>& reverse_topo_sort) {
     if (scc == origsize) {
         for (int i = 0; i < origsize; i++)
             on[i] = i;
+        /*
         // topological sort
         topological_sort(g, reverse_topo_sort);
         // update graph's topological id
         for (int i = 0; i < reverse_topo_sort.size(); i++)
             g[reverse_topo_sort[i]].topo_id = reverse_topo_sort.size()-i-1;
-
+        */
         return;
     }
 
@@ -238,6 +239,8 @@ void GraphUtil::mergeSCC(Graph& g, int* on, vector<int>& reverse_topo_sort) {
     int maxid = g.num_vertices()-1;
     while (mit != sccmap.end()) {
         num_comp = mit->first;
+
+        cout << "Processing scc #" << num_comp << " with " << sccmap.count(num_comp) << " in total                                             \r";
 
         if (++sccmap.lower_bound(num_comp) == sccmap.upper_bound(num_comp)) {
             on[mit->second] = mit->second;
@@ -310,14 +313,17 @@ void GraphUtil::mergeSCC(Graph& g, int* on, vector<int>& reverse_topo_sort) {
             inlist.erase(mit->second);
         }
     }
+    cout << "\n";
 
     g = Graph(inlist, outlist);
 
+    /*
     // topological sort
     topological_sort(g, reverse_topo_sort);
     // update graph's topological id
     for (int i = 0; i < reverse_topo_sort.size(); i++)
         g[reverse_topo_sort[i]].topo_id = reverse_topo_sort.size()-i-1;
+    */
 
     // update index map
     hash_map<int,int> indexmap;

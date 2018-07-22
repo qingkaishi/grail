@@ -367,6 +367,11 @@ bool Grail::go_for_reach(int src, int trg) {
 #ifdef DEBUG
     TotalCall++;
 #endif
+    if (LabelStack.callingDepth() > 6) {
+        // we only compute for 6-level calls
+        return false;
+    }
+
     LabelStack.push();
 
     if(src == trg) {
