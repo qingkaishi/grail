@@ -268,7 +268,7 @@ void Grail::visit(Graph& tree, int vid, int& pre_post, vector<bool>& visited) {
     stack<int> oe_stack; // oe_stack short for outedge
     int pre_order = 0x7fffffff;
     oe_stack.push(vid);
-    while(!oe_stack.empty)
+    while(!oe_stack.empty())
     {
         int curr;
         while(curr = oe_stack.top()) //from top to bottom
@@ -279,8 +279,8 @@ void Grail::visit(Graph& tree, int vid, int& pre_post, vector<bool>& visited) {
             {
                 break;
             }
-            random_shuffle(el.begin, el.end);
-            for(EdgeList::iterator eit = el.rbegin(); eit != rend(); eit++)
+            random_shuffle(el.begin(), el.end());
+            for(EdgeList::iterator eit = el.rbegin(); eit != el.rend(); eit++)
             {
                 if(!visited[*eit])
                 {
@@ -291,7 +291,7 @@ void Grail::visit(Graph& tree, int vid, int& pre_post, vector<bool>& visited) {
                     pre_order=min(pre_order, tree[*eit].pre->back());
                 }
             }
-            if(isParent(vid, curr))
+            if(isParent(tree, vid, curr))
             {
                 break; 
             }   
