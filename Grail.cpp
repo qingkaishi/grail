@@ -7,6 +7,7 @@ or their institutions liable under any circumstances.
 #include "Grail.h"
 #include "TCSEstimator.h"
 #include <queue>
+#include <stack>
 
 vector<int> _index;
 vector<double> customIndex;
@@ -239,16 +240,84 @@ void Grail::randomlabeling(Graph& tree) {
     }
 }
 
+bool Grail::isParent(Graph& tree, int vid, int topid) // topid means the top element of oe_stack's id
+{
+    if(vid == topid)
+    {
+        return false;
+    }
+
+    EdgeList il = tree.in_edges[vid];
+    if(!il.empty()) // root
+    {
+        return false;
+    }
+
+    vector<int>::iterator it;
+    it = std::find(il.begin(), it.end(), topid);
+    if(it != il.end())
+    {
+        return true;
+    }
+    return false;
+}
+
 // traverse tree to label node with pre and post order by giving a start node
 int Grail::visit(Graph& tree, int vid, int& pre_post, vector<bool>& visited) {
     //	cout << "entering " << vid << endl;
+    stack<int> oe_stack; // oe_stack short for outedge
+    int pre_order = 0x7fffffff;
+    oe_stack.push(vid);
+    while(!oe_stack.empty)
+    {
+        int curr;
+        while(curr = oe_stack.top()) //from top to bottom
+        {
+            int pre_order = tree.num_vertices()+1;
+            EdgeList el = tree.out_edges(curr);
+            if(!el.empty()) // leaf node
+            {
+                break;
+            }
+            random_shuffle(el.begin, el.end);
+            for(EdgeList::iterator eit = el.end(); eit != begin(); eit--)
+            {
+                if(!visited[*eit])
+                {
+                    oe_stack.push(*eit);
+                }
+                else
+                {
+                    pre_order=min(pre_order, tree[*eit].pre->back());
+                }
+            }
+            if(isParent(vid, curr))
+            {
+                break; 
+            }   
+        }
+        
+
+        vid = oe_stack.top(); // id to be visited
+        oe_stack.pop();
+        visited[vid] = true;
+
+        pre_order = min(pre_order, pre_post);
+        min_pre_order = min(pre_order, min_pre_order);
+
+        tree[vid].pre->push_back(pre_order);
+        tree[vid].middle->push_back(pre_post);
+        tree[vid].post->push_back(pre_post);
+        pre_post++;
+    }
+    /*
     visited[vid] = true;
     EdgeList el = tree.out_edges(vid);
     random_shuffle(el.begin(),el.end());
     EdgeList::iterator eit;
     int pre_order = tree.num_vertices()+1;
     tree[vid].middle->push_back(pre_post);
-    for (eit = el.begin(); eit != el.end(); eit++) {
+    for (eit = el.begin(); eit != el.end(); eit--) {
         if (!visited[*eit]){
             pre_order=min(pre_order,visit(tree, *eit, pre_post, visited));
         }else
@@ -261,6 +330,7 @@ int Grail::visit(Graph& tree, int vid, int& pre_post, vector<bool>& visited) {
     tree[vid].post->push_back(pre_post);
     pre_post++;
     return pre_order;
+    */
 }
 
 // traverse tree to label node with pre and post order by giving a start node

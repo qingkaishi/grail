@@ -32,7 +32,8 @@ class Grail {
 		Grail(Graph& graph, int dim);
 		Grail(Graph& graph, int dim, int labelingType, bool POOL, int POOLSIZE);
 		~Grail();
-		static int visit(Graph& tree, int vid, int& pre_post, vector<bool>& visited);
+		static bool isParent(Graph& tree, int vid, int topid);
+		static void visit(Graph& tree, int vid, int& pre_post, vector<bool>& visited);
 		static int fixedreversevisit(Graph& tree, int vid, int& pre_post, vector<bool>& visited,int traversal);
 		static int customvisit(Graph& tree, int vid, int& pre_post, vector<bool>& visited, int traversal);
 		static void randomlabeling(Graph& tree);

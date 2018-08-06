@@ -40,9 +40,9 @@ struct Vertex {
 	int post_order;
 	double tcs;
 	int mingap;
-	vector<int> *pre;
-	vector<int> *post;
-	vector<int> *middle;
+	vector<int> *pre; // pre order in each dim
+	vector<int> *post; // post order in each dim
+	vector<int> *middle; 
 	Vertex(int ID) : id(ID) {
 		top_level = -1;
 		visited = false;
@@ -74,16 +74,19 @@ class Graph {
 		GRA graph;
 		VertexList vl;
 		int vsize;
-		std::map<std::pair<int, int>, int> label_map;
+		std::map<std::pair<int, int>, int> label_map; // <sid, tid> -> lid
 		
 	public:
 		Graph();
 		Graph(int);
 		Graph(GRA&, VertexList&);
-		Graph(istream&);
+		Graph(istream&); //read from file, then build graph.
 		~Graph();
+		// find label from label_map, return label id
 		int get_label(int e_src, int e_dst);
+
 		bool contains(int src, int trg,int dim);
+		
 		bool incrementalContains(int src, int trg, int cur);
 		void readGraph(istream&);
 		void writeGraph(ostream&);

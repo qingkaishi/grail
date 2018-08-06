@@ -27,6 +27,7 @@
 # Explicit files to ignore (only matches one).
 #==============================================================================#
 .gitusers
+.vscode/
 autom4te.cache
 cscope.files
 cscope.out
