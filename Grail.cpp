@@ -280,7 +280,7 @@ void Grail::visit(Graph& tree, int vid, int& pre_post, vector<bool>& visited) {
                 break;
             }
             random_shuffle(el.begin, el.end);
-            for(EdgeList::iterator eit = el.end(); eit != begin(); eit--)
+            for(EdgeList::iterator eit = el.rbegin(); eit != rend(); eit++)
             {
                 if(!visited[*eit])
                 {
