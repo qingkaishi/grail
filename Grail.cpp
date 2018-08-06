@@ -247,14 +247,14 @@ bool Grail::isParent(Graph& tree, int vid, int topid) // topid means the top ele
         return false;
     }
 
-    EdgeList il = tree.in_edges[vid];
+    EdgeList il = tree.in_edges(vid);
     if(!il.empty()) // root
     {
         return false;
     }
 
     vector<int>::iterator it;
-    it = std::find(il.begin(), it.end(), topid);
+    it = std::find(il.begin(), il.end(), topid);
     if(it != il.end())
     {
         return true;
@@ -263,7 +263,7 @@ bool Grail::isParent(Graph& tree, int vid, int topid) // topid means the top ele
 }
 
 // traverse tree to label node with pre and post order by giving a start node
-int Grail::visit(Graph& tree, int vid, int& pre_post, vector<bool>& visited) {
+void Grail::visit(Graph& tree, int vid, int& pre_post, vector<bool>& visited) {
     //	cout << "entering " << vid << endl;
     stack<int> oe_stack; // oe_stack short for outedge
     int pre_order = 0x7fffffff;
