@@ -7,6 +7,8 @@ or their institutions liable under any circumstances.
 #include "Grail.h"
 #include "TCSEstimator.h"
 #include <queue>
+#include <stack>
+#include <fstream>
 
 vector<int> _index;
 vector<double> customIndex;
@@ -59,9 +61,13 @@ Grail::Grail(Graph& graph, int Dim, int labelingType, bool pool, int poolsize): 
     for(i=0;i<POOLSIZE;i++){
         switch(labelingType){
         case 0 : Grail::randomlabeling(graph);
+        // TODO delete
+        //outputlabeling(graph);
         break;
         case 1 : Grail::setIndex(graph,i);
         Grail::fixedreverselabeling(graph,i);
+        //TODO delete
+        //outputlabeling(graph);
         break;
         default :
             Grail::setCustomIndex(graph,i,labelingType);
@@ -159,6 +165,38 @@ void Grail::fixedreverselabeling(Graph& tree, int traversal) {
     }
 }
 
+void Grail::outputlabeling(Graph& tree)
+{
+	ofstream out("iteration.txt");
+	for(int i = 0; i < tree.num_vertices(); i++)
+	{
+		out << tree[i].pre->at(0) << " " << tree[i].post->at(0) << " " << tree[i].middle->at(0) << endl;
+	}
+	out.close();
+}
+//does vid is topid's father ?
+bool Grail::isParent(Graph& tree, int vid, int topid) // topid means the top element of oe_stack's id
+{
+    if(vid == topid)
+    {
+        return false;
+    }
+
+    EdgeList il = tree.in_edges(vid);
+    if(il.empty()) // root
+    {
+        return false;
+    }
+
+    vector<int>::iterator it;
+    it = std::find(il.begin(), il.end(), topid);
+    if(it != il.end())
+    {
+        return true;
+    }
+    return false;
+}
+
 // compute interval label for each node of tree (pre_order, post_order)
 void Grail::customlabeling(Graph& graph, int traversal) {
     vector<int> roots = graph.getRoots();
@@ -240,32 +278,125 @@ void Grail::randomlabeling(Graph& tree) {
 }
 
 // traverse tree to label node with pre and post order by giving a start node
-int Grail::visit(Graph& tree, int vid, int& pre_post, vector<bool>& visited) {
-    //	cout << "entering " << vid << endl;
-    visited[vid] = true;
-    EdgeList el = tree.out_edges(vid);
-    random_shuffle(el.begin(),el.end());
-    EdgeList::iterator eit;
-    int pre_order = tree.num_vertices()+1;
-    tree[vid].middle->push_back(pre_post);
-    for (eit = el.begin(); eit != el.end(); eit++) {
-        if (!visited[*eit]){
-            pre_order=min(pre_order,visit(tree, *eit, pre_post, visited));
-        }else
-            pre_order=min(pre_order,tree[*eit].pre->back());
-        //pre_order=min(pre_order,tree[*eit].pre->at(tree[*eit].pre->size()-1));
-    }
+void Grail::visit(Graph& tree, int vid, int& pre_post, vector<bool>& visited) {
+    stack<int> oe_stack; // oe_stack short for outedge
+    int pre_order = tree.num_vertices() + 1;
+    oe_stack.push(vid);
+    while(!oe_stack.empty())
+    {
+    	bool hasNotvisited = true;
+    	while(hasNotvisited) //from top to bottom
+    	{
+    	    hasNotvisited = false; // suppose that top element has no children not be visited
+    	    int curr = oe_stack.top();
+    	    tree[curr].middle->push_back(pre_post);
 
-    pre_order=min(pre_order,pre_post);
-    tree[vid].pre->push_back(pre_order);
-    tree[vid].post->push_back(pre_post);
-    pre_post++;
-    return pre_order;
+    	    //cout << "top is " << curr << endl;
+    	    pre_order = tree.num_vertices() + 1;
+    	    EdgeList el = tree.out_edges(curr);
+    	    //cout << curr << " has " << el.size() << " children" << endl;
+    	    if(el.empty()) // leaf node
+            {
+                break;
+            }
+            random_shuffle(el.begin(), el.end());
+            //cout << "they are " << endl;
+            for(EdgeList::reverse_iterator eit = el.rbegin(); eit != el.rend(); eit++)
+            {
+                if(!visited[*eit])
+                {
+                    //cout << "unvisited \t" << *eit << endl;
+                    hasNotvisited = true; // has children to visit
+                    oe_stack.push(*eit);
+                }
+                else
+                {
+                    //cout << "has visited \t" << *eit << endl;
+                    pre_order=min(pre_order, tree[*eit].pre->back());
+                }
+            }
+            /*
+            if(isParent(tree, vid, curr))
+            {
+                break;
+            }*/
+        }
+
+        vid = oe_stack.top(); // id to be visited
+        oe_stack.pop();
+        // loop
+        if(visited[vid]){
+            continue;
+        }
+        visited[vid] = true;
+        //cout << "entering " << vid << endl;
+        pre_order = min(pre_order, pre_post);
+        tree[vid].pre->push_back(pre_order);
+        tree[vid].post->push_back(pre_post);
+        //cout << "labeling:" << pre_order << " " << pre_post << endl;
+        pre_post++;
+    }
 }
 
 // traverse tree to label node with pre and post order by giving a start node
-int Grail::fixedreversevisit(Graph& tree, int vid, int& pre_post, vector<bool>& visited, int traversal) {
-    //	cout << "entering " << vid << endl;
+void Grail::fixedreversevisit(Graph& tree, int vid, int& pre_post, vector<bool>& visited, int traversal) {
+    stack<int> oe_stack; // oe_stack short for outedge
+    int pre_order = tree.num_vertices()+1;
+    oe_stack.push(vid);
+    while(!oe_stack.empty())
+    {
+        bool hasNotvisited = true;
+        while(hasNotvisited) //from top to bottom
+        {
+            hasNotvisited = false; // suppose that top element has no children not be visited
+            int curr = oe_stack.top();
+            tree[curr].middle->push_back(pre_post);
+
+            //cout << "top is " << curr << endl;
+            pre_order = tree.num_vertices()+1;
+            EdgeList el = tree.out_edges(curr);
+            //cout << curr << " has " << el.size() << " children" << endl;
+            if(el.empty()) // leaf node
+            {
+                break;
+            }
+            sort(el.begin(),el.end(),index_cmp<vector<int>&>(_index));
+            if(traversal %2 )
+                reverse(el.begin(),el.end());
+            //cout << "they are " << endl;
+            for(EdgeList::reverse_iterator eit = el.rbegin(); eit != el.rend(); eit++)
+            {
+                if(!visited[*eit])
+                {
+                    //cout << "unvisited \t" << *eit << endl;
+                    hasNotvisited = true; // has children to visit
+                    oe_stack.push(*eit);
+                }
+                else
+                {
+                    //cout << "has visited \t" << *eit << endl;
+                    pre_order=min(pre_order, tree[*eit].pre->back());
+                }
+            }
+        }
+        vid = oe_stack.top(); // id to be visited
+        oe_stack.pop();
+
+        // handle loop
+        if(visited[vid]){
+            continue;
+        }
+        visited[vid] = true;
+        //cout << "entering " << vid << endl;
+        pre_order = min(pre_order, pre_post);
+        tree[vid].pre->push_back(pre_order);
+        tree[vid].post->push_back(pre_post);
+        //cout << "labeling:" << pre_order << " " << pre_post << endl;
+        pre_post++;
+    }
+
+	/*
+	//	cout << "entering " << vid << endl;
     visited[vid] = true;
     EdgeList el = tree.out_edges(vid);
     sort(el.begin(),el.end(),index_cmp<vector<int>&>(_index));
@@ -288,13 +419,8 @@ int Grail::fixedreversevisit(Graph& tree, int vid, int& pre_post, vector<bool>& 
     pre_post++;
     //	cout << "exiting " << vid << endl;
     return pre_order;
+   	*/
 }
-
-
-
-
-
-
 
 /*************************************************************************************
 GRAIL Query Functions
