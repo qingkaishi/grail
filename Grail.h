@@ -34,13 +34,13 @@ class Grail {
 		~Grail();
 		static void visit(Graph& tree, int vid, int& pre_post, vector<bool>& visited);
 		static void fixedreversevisit(Graph& tree, int vid, int& pre_post, vector<bool>& visited,int traversal);
+		static bool isParent(Graph& tree, int vid, int topid);
 		static int customvisit(Graph& tree, int vid, int& pre_post, vector<bool>& visited, int traversal);
 		static void randomlabeling(Graph& tree);
 		static void customlabeling(Graph& tree, int traversal);
 		static void fixedreverselabeling(Graph& tree, int traversal);
 		static void setIndex(Graph& tree, int traversal); 
-		static void setCustomIndex(Graph& tree, int traversal, int type); 
-		static bool isParent(Graph& tree, int vid, int topid);
+		static void setCustomIndex(Graph& tree, int traversal, int type);
 
 		void set_level_filter(bool lf);
 		bool reach(int src, int trg, ExceptionList * el);
