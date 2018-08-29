@@ -13,8 +13,8 @@ $(EXECUTABLE) : $(OBJECTS)
 .cpp.o : 
 	$(CC) $(CPPFLAGS) $< -o $@
 
-interval_tree.o : interval_tree.c interval_tree.h templatestack.h
-	g++ -c interval_tree.c 
+interval_tree.o : interval_tree.cpp interval_tree.h templatestack.h
+	g++ -c interval_tree.cpp 
 
 clean:
 	-rm -f *.o grail

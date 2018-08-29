@@ -182,7 +182,7 @@ int GraphUtil::kosaraju(Graph& g, multimap<int,int>& sccmap) {
     while (!out_stack.empty()) {
         int i = out_stack.top();
         out_stack.pop();
-        printf("Second Round DFS: %d%%                                         \r", ((stack_size-out_stack.size())*100) / stack_size);
+        printf("Second Round DFS: %ld%%                                         \r", ((stack_size-out_stack.size())*100) / stack_size);
         second_dfs(i);
     }
     printf("\n");
