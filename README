@@ -1,7 +1,9 @@
 ***************************************************************
-*****************      GRAIL (improved)     *******************
-**** Author :           Hilmi YILDIRIM      *******************
+*********  GRAIL (improved, Client/Server version) ************
+**** Author :   Hilmi YILDIRIM,  Yilin Zheng    ***************
 **** please contact yildih2@cs.rpi.edu for any problems *******
+**** 11510506@mail.sustc.edu.cn for any problems **************
+******************* related to C/S version ********************
 ***************************************************************
 
 The code is associated with the following papers:
@@ -98,3 +100,6 @@ Sample usage:
 The program reports the success rate, construction time, query time and the memory usage. 
 
 
+Reference:
+
+[https://blog.csdn.net/qq_38880380/article/details/80341482](https://blog.csdn.net/qq_38880380/article/details/80341482)
