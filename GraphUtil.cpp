@@ -5,7 +5,7 @@ There is no additional support offered, nor are the author(s)
 or their institutions liable under any circumstances.
  */
 #include <stack>
-#include "GraphUtil.h"
+#include "GraphUtil.hpp"
 // depth first search given a start node
 void GraphUtil::dfs(Graph& g, int vid, vector<int>& preorder, vector<int>& postorder, vector<bool>& visited) {
     visited[vid] = true;

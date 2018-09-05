@@ -5,7 +5,7 @@ There is no additional support offered, nor are the author(s)
 or their institutions liable under any circumstances.
 */
 
-#include "TCSEstimator.h"
+#include "TCSEstimator.hpp"
 
 
 TCSEstimator::TCSEstimator(Graph& g, int k){

@@ -7,7 +7,7 @@ or their institutions liable under any circumstances.
 #ifndef INTERVALTREE_H_
 #define INTERVALTREE_H_
 
-#include"templatestack.h"
+#include"templatestack.hpp"
 #include<math.h>
 #include<limits.h>
 

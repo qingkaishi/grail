@@ -7,9 +7,9 @@ or their institutions liable under any circumstances.
 #ifndef _BOX_H
 #define _BOX_H
 
-#include "GraphUtil.h"
-#include "exception_list.h"
-#include "PushPopCache.h"
+#include "GraphUtil.hpp"
+#include "exception_list.hpp"
+#include "PushPopCache.hpp"
 
 // test switch
 #define _TEST_
