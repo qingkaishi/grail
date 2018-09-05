@@ -31,7 +31,12 @@ To compile :
 make
 
 To run :
-./grail -h
+
+- Server: ./Server
+
+- Client: ./Client <IP address>
+
+The query the result, input the command into client.
 
 Usage:
  grail [-h] <filename> -test <testfilename> [-dim <DIM>] [-skip] [-ex] [-ltype <labelingtype>] [-t <alg_type>]
