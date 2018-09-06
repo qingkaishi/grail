@@ -38,7 +38,7 @@ To run :
 
 - Client: ./Client <IP address>
 
-The query the result, input the command into client.
+The query the result, input the original command into client when client has connected to server.
 
 Usage:
  grail [-h] <filename> -test <testfilename> [-dim <DIM>] [-skip] [-ex] [-ltype <labelingtype>] [-t <alg_type>]
@@ -99,6 +99,27 @@ Sample usage:
 
 The program reports the success rate, construction time, query time and the memory usage. 
 
+
+Principle of Client/Server version:
+
+The method to handle parallel queries is by forking subprocess to run the queries. Every client can send one
+query each time, but multiple clients can connect to a same server at the same time, and the server will fork
+subprocess to deal with the query. The queue size of the server can be reset in `Server.cpp` and its default
+value is 10. 
+
+How Query the Server can Handle:
+
+Since the original `main` function is changed to be a callable function `grail`, then the server will receive 
+the data from the estabilished socket, the received data is the original command like `./grail sample.gra -test \
+sample.test -dim 2` and server will deal with this command as string and parse the arguments the `grail` needs.
+The query result will be sent back to client through socket. All the output will be printed in terminal. 
+
+How to Run:
+
+1. `make` to get executable program: server, client
+2. `./server` (The binded IP address is the current host), successfully run the server will get promption.
+3. `./client <IP address>` to run the client, if succeed, the client will be ready to send queris to server. Then
+   just input the queries like: `./grail sample.gra -test sample.test -dim 2 -t -2 -ltype 1` to get the result. 
 
 Reference:
 

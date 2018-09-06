@@ -57,14 +57,14 @@ bool LEVEL_FILTER_I = false;
 
 float labeling_time, query_time, query_timepart,exceptionlist_time;
 int alg_type = 1;
-std::ostringstream result;
+std::ostringstream result;  // the result string which will be sent back to client through socket
 
 // utility
 static void handle(int sig);
 static int usage(void);
 static int parse_args(char *buffer);
-static int grail(char *buffer, int sockfd);
-static void reply_echo(int sockfd);
+static int grail(char *buffer, int sockfd);  // original `main`
+static void reply_echo(int sockfd);  // echo the reply, which will call `grail` to search the result 
 
 
 int main(int argc, char *argv[])
@@ -103,11 +103,13 @@ int main(int argc, char *argv[])
         }
         cout << "New client connetced." << endl;
 
+        /* The most important part, which implementing the functionality of multiple client connecting 
+           to a same server.*/
         pid_t child_id;
         if ((child_id = fork()) == 0) // fork a subprocess to handle the connection
         {
             cout << "Child process: " << getpid() << " created." << endl;
-            close(server_sockfd);  // close listen in child process
+            close(server_sockfd);  // close listen in child process so that the child process will not act as its father
             reply_echo(connection);  // handle the connection
             exit(0);
         }
