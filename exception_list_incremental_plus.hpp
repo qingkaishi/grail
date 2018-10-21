@@ -7,13 +7,13 @@ or their institutions liable under any circumstances.
 #ifndef _EXCEPTION_LIST_INCREMENTAL_PLUS_H
 #define _EXCEPTION_LIST_INCREMENTAL_PLUS_H
 
-#include"Graph.h"
+#include"Graph.hpp"
 //#include"topological_sort.h"
-#include"time_tracker.h"
-#include"utils.h"
-#include"interval_tree.h"
-#include"exception_list.h"
-#include"exception_list_incremental_base.h"
+#include"time_tracker.hpp"
+#include"utils.hpp"
+#include"interval_tree.hpp"
+#include"exception_list.hpp"
+#include"exception_list_incremental_base.hpp"
 #include<vector>
 #include<map>
 

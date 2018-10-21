@@ -1,4 +1,4 @@
-#include "interval_tree.h"
+#include "interval_tree.hpp"
 #include <stdio.h>
 #include <math.h>
 #include<stdlib.h>

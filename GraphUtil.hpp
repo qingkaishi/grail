@@ -7,7 +7,7 @@ or their institutions liable under any circumstances.
 #ifndef _GRAPH_UTIL_H_
 #define _GRAPH_UTIL_H_
 
-#include "Graph.h"
+#include "Graph.hpp"
 #include <sys/time.h>
 
 class GraphUtil {

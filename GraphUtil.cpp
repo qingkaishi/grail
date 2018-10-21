@@ -5,7 +5,7 @@ There is no additional support offered, nor are the author(s)
 or their institutions liable under any circumstances.
  */
 #include <stack>
-#include "GraphUtil.h"
+#include "GraphUtil.hpp"
 // depth first search given a start node
 void GraphUtil::dfs(Graph& g, int vid, vector<int>& preorder, vector<int>& postorder, vector<bool>& visited) {
     visited[vid] = true;
@@ -182,7 +182,7 @@ int GraphUtil::kosaraju(Graph& g, multimap<int,int>& sccmap) {
     while (!out_stack.empty()) {
         int i = out_stack.top();
         out_stack.pop();
-        printf("Second Round DFS: %d%%                                         \r", ((stack_size-out_stack.size())*100) / stack_size);
+        printf("Second Round DFS: %ld%%                                         \r", ((stack_size-out_stack.size())*100) / stack_size);
         second_dfs(i);
     }
     printf("\n");

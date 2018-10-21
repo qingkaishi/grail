@@ -1,7 +1,9 @@
 ***************************************************************
-*****************      GRAIL (improved)     *******************
-**** Author :           Hilmi YILDIRIM      *******************
+*********  GRAIL (improved, Client/Server version) ************
+**** Author :   Hilmi YILDIRIM,  Yilin Zheng    ***************
 **** please contact yildih2@cs.rpi.edu for any problems *******
+**** 11510506@mail.sustc.edu.cn for any problems **************
+******************* related to C/S version ********************
 ***************************************************************
 
 The code is associated with the following papers:
@@ -12,8 +14,8 @@ and
 Detailed usage is explained below, here we give sample usage
 for the main methods of the papers above.  
 ---------------------------------------------------------------
-1) ./grail sample.gra -test sample.test -dim 2
-2) ./grail sample.gra -test sample.test -dim 2 -t -2 -ltype 1
+1) ./server sample.gra -test sample.test -dim 2 -t -2 -ltype 1 # to start server
+2) ./client <IP address> # to start client
 ---------------------------------------------------------------
 
 This package is provided for the repeatability purposes. It may
@@ -31,7 +33,25 @@ To compile :
 make
 
 To run :
-./grail -h
+
+- Server: ./Server <graph file> <other arguments...>
+
+- Client: ./Client <IP address>
+
+The query the result :
+
+- input: 
+      <src1> <dest1>
+      <src2> <dest2>
+      <src3> <dest3>
+      <src4> <dest4>
+      ...
+      over
+- output:
+      True or False
+      True or Falae
+      True or False
+      ...
 
 Usage:
  grail [-h] <filename> -test <testfilename> [-dim <DIM>] [-skip] [-ex] [-ltype <labelingtype>] [-t <alg_type>]
@@ -85,11 +105,28 @@ Selection of the Algorithm:
 The best algorithm in our experiments is (-t -2)
 Please see the paper for details of different algorithms.
 
-Sample usage:
-./grail input.gra -test test.txt -t -2 -ltype 1 -dim 2 (this the main final algorithm proposed in 2nd paper)
-./grail input.gra -test test.txt -t 1 -ltype 0 -dim 2 (this is the algorithm proposed in VLDB'10 paper )
-
-
 The program reports the success rate, construction time, query time and the memory usage. 
 
 
+Principle of Client/Server version:
+
+The method to handle parallel queries is by forking subprocess to run the queries. Every client can send multiple
+queries with "over" ending. Also, multiple clients can connect to the same server at the same time, and the server 
+will fork subprocess to deal with the query. The queue size of the server can be reset in `Server.cpp` and its 
+default value is 10. OpenMP is used to parallelize the `for` loops so as to provide parallel queries.
+
+How Query the Server can Handle:
+
+After starting the client, the user can input `<src> <dest>` to send the queries and finally send "over" to inform the server that
+all queries are been sent and then the server will handle these queries and send back the result with either "True" or 
+"False".
+
+How to Run:
+
+1. `make` to get executable program: server, client
+2. `./server <graph file>` (The binded IP address is the current host), successfully run the server will get promption.
+3. `./client <IP address>` to run the client, if succeed, the client will be ready to send queris to server.
+
+Reference:
+
+https://blog.csdn.net/qq_38880380/article/details/80341482

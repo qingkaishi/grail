@@ -7,11 +7,11 @@ or their institutions liable under any circumstances.
 #ifndef _EXCEPTION_LIST_INCREMENTAL_BASE_H
 #define _EXCEPTION_LIST_INCREMENTAL_BASE_H
 
-#include"Graph.h"
-#include"time_tracker.h"
-#include"utils.h"
-#include"exception_list.h"
-#include"interval_tree.h"
+#include"Graph.hpp"
+#include"time_tracker.hpp"
+#include"utils.hpp"
+#include"exception_list.hpp"
+#include"interval_tree.hpp"
 #include<vector>
 #include<map>
 
