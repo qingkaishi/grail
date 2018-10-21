@@ -3,9 +3,16 @@
 static void usage(void)
 {
     std::cout << "\nUsage:\n"
-              << "client [-h] <IP address>\n"
-              << "      -h         get the help information\n"
-              << "  <IP address>   Server IP address\n"
+              << "For setting up connection:\n"
+                 "\t\tclient [-h] <IP address>\n"
+                 "Description:\n"
+                 "      -h            Get the help information.\n"
+                 "  <IP address>      Server IP address.\n"
+                 "For query reachability:"
+                 "\t\t<source>  <destination>\n"
+                 "Description:\n"
+                 "    <source>        Source, the beginning.\n"
+                 "   <destination>>   Destination, the end.\n"
               << std::endl;
 }
 
@@ -39,23 +46,33 @@ int main(int argc, char **argv)
     std::cout << "Please input query or type \"exit\" to quit:" << std::endl;
     while (fgets(sendbuf, sizeof(sendbuf), stdin) != NULL)
     {
-        ::send(sock_cli, sendbuf, strlen(sendbuf), 0);  // send argv
+        ::send(sock_cli, sendbuf, strlen(sendbuf), 0); // send argv
         std::cout << "Data sent." << std::endl;
+        if (strcmp(sendbuf, "over\n") == 0)
+        {
+            std::cout << "Client received data:" << std::endl;
+            memset(recvbuf, 0, sizeof(recvbuf));
+            while (::recv(sock_cli, recvbuf, sizeof(recvbuf), 0)) // receive data
+            {
+                if (strcmp(recvbuf, "over") != 0)
+                {
+                    std::cout << recvbuf << std::endl;   // print the received data
+                    memset(recvbuf, 0, sizeof(recvbuf)); // clear receive buffer
+                }
+                else 
+                {
+                    break;
+                }
+            }                                        
+        }
         if (strcmp(sendbuf, "exit\n") == 0)
         {
             std::cout << "Client exited." << std::endl;
             break;
         }
-        std::cout << "Client received data:\n" << std::endl;
-        ::recv(sock_cli, recvbuf, sizeof(recvbuf), 0);  // receive data
-        std::cout << recvbuf << std::endl;  // print the received data
-        
         memset(sendbuf, 0, sizeof(sendbuf));  // clear sending buffer
-        memset(recvbuf, 0, sizeof(recvbuf));  // clear receive buffer
-        std::cout << "Please input query or type \"exit\" to quit:" << std::endl;
+        std::cout << "Please input query(\"over\" to finish sending queries) or \"exit\" to quit:" << std::endl;
     }
-    
     ::close(sock_cli);  // close client socket
-    
     return 0;
 }

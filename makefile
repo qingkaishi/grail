@@ -1,5 +1,5 @@
 CC	              = g++
-CPPFLAGS          = -g -Wno-deprecated -O3 -c -std=c++11
+CPPFLAGS          = -g -Wno-deprecated -O3 -c -std=c++11 -openmp
 LDFLAGS	          = -O3 
 
 # Server

@@ -22,6 +22,7 @@ Add necessary headers for creating server
 #include <string.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <omp.h>
 
 #include "Graph.hpp"
 #include "GraphUtil.hpp"
@@ -39,6 +40,7 @@ Add necessary headers for creating server
 #define PORT 24816
 #define QUEUE_SIZE 10
 #define BUFFER_SIZE 102400
+#define THREAD_COUNT 4 //number of threads
 
 bool SKIPSCC = false;
 bool BIDIRECTIONAL = false;
@@ -57,18 +59,20 @@ bool LEVEL_FILTER_I = false;
 
 float labeling_time, query_time, query_timepart,exceptionlist_time;
 int alg_type = 1;
-std::ostringstream result;  // the result string which will be sent back to client through socket
 
 // utility
 static void handle(int sig);
 static int usage(void);
-static int parse_args(char *buffer);
-static int grail(char *buffer, int sockfd);  // original `main`
-static void reply_echo(int sockfd);  // echo the reply, which will call `grail` to search the result 
-
+static void parse_args(int argc, char* argv[]);
+static int grail(int sockfd);
 
 int main(int argc, char *argv[])
 {
+    if (argc < 2)
+    {
+        cerr << "Graph are required." << endl;
+        exit(0);
+    }
     int server_sockfd = ::socket(AF_INET, SOCK_STREAM, 0);
 
     struct sockaddr_in server_sockaddr;
@@ -78,7 +82,7 @@ int main(int argc, char *argv[])
 
     if (::bind(server_sockfd, (struct sockaddr *)&server_sockaddr, sizeof(server_sockaddr)) == -1)
     {
-        cerr << "Fail to bind port: " << PORT << "maybe the port is occupied by another process." << endl;
+        cerr << "Fail to bind port: " << PORT << ", maybe the port is occupied by another process." << endl;
         exit(-1);
     }
     cout << "Bind success." << endl;
@@ -110,12 +114,12 @@ int main(int argc, char *argv[])
         {
             cout << "Child process: " << getpid() << " created." << endl;
             close(server_sockfd);  // close listen in child process so that the child process will not act as its father
-            reply_echo(connection);  // handle the connection
+            parse_args(argc, argv); // parse arguments
+            while(1)
+            {
+                grail(connection); // call grail
+            }
             exit(0);
-        }
-        else
-        {
-            cerr << "Client fails to connect server." << endl;
         }
     }
 
@@ -167,21 +171,17 @@ static void handle(int sig)
     cout << "COMPAR: " << alg_name << DIM << "\t" << labeling_time << "\t"
          << "TOut"
          << "\t" << endl;
-    result << "COMPAR: " << alg_name << DIM << "\t" << labeling_time << "\t"
-           << "TOut"
-           << "\t" << endl;
-
     exit(1);
 }
 
 static int usage(void)
 {
     cout << "\nUsage:\n"
-            " grail [-h] <filename> -test <testfilename> [-dim <DIM>] [-skip] [-ex] [-ltype <labelingtype>] [-t <alg_type>]\n"
+            " grail [-h] <filename> "/*-test <testfilename>*/" [-dim <DIM>] [-skip] [-ex] [-ltype <labelingtype>] [-t <alg_type>]\n"
             "Description:\n"
             "	-h			Print the help message.\n"
             "  <filename> is the name of the input graph in gra format.\n"
-            "	-test		Set the queryfile which contains a line of <source> <target> <reachability> for each query. \n"
+            // "	-test		Set the queryfile which contains a line of <source> <target> <reachability> for each query. \n"
             "	-dim 		Set the number of traversals to be performed. The default value is 5.\n"
             "	-ex 		Use exception lists method instead of pruning. Default is not using exception lists.\n"
             "	-skip		Skip the phase converting the graph into a dag. Use only when the input is already a DAG.\n"
@@ -202,68 +202,16 @@ static int usage(void)
             " \t\t\t 4  : Heuristicly Guided Traversal: Maximum Adjusted Volume First \n"
             " \t\t\t 5  : Heuristicly Guided Traversal: Maximum of Adjusted Minimum Volume First \n"
          << endl;
-    result << "\nUsage:\n"
-              " grail [-h] <filename> -test <testfilename> [-dim <DIM>] [-skip] [-ex] [-ltype <labelingtype>] [-t <alg_type>]\n"
-              "Description:\n"
-              "	-h			Print the help message.\n"
-              "  <filename> is the name of the input graph in gra format.\n"
-              "	-test		Set the queryfile which contains a line of <source> <target> <reachability> for each query. \n"
-              "	-dim 		Set the number of traversals to be performed. The default value is 5.\n"
-              "	-ex 		Use exception lists method instead of pruning. Default is not using exception lists.\n"
-              "	-skip		Skip the phase converting the graph into a dag. Use only when the input is already a DAG.\n"
-              "	-t <alg_type>		alg_type can take 8 different values.  Default value is 1.\n"
-              " \t\t\t 1  : Basic Search (used in the original VLDB'10 paper) \n"
-              " \t\t\t 2  : Basic Search + Level Filter \n"
-              " \t\t\t 3  : Bidirectional Search \n"
-              " \t\t\t 6  : Bidirectional Search + Level Filter \n"
-              " \t\t\t -1 : Positive Cut + Basic Search\n"
-              " \t\t\t -2 : Positive Cut + Basic Search + Level Filter (usually provides the best query times) \n"
-              " \t\t\t -3 : Positive Cut + Bidirectional Search \n"
-              " \t\t\t -6 : Positive Cut + Bidirectional Search + Level Filter\n"
-              "	-ltype <labeling_type>		labeling_type can take 6 different values.  Default value is 0.\n"
-              " \t\t\t 0  : Completely randomized traversals.  \n"
-              " \t\t\t 1  : Randomized Reverse Pairs Traversals (usually provides the best quality) \n"
-              " \t\t\t 2  : Heuristicly Guided Traversal: Maximum Volume First \n"
-              " \t\t\t 3  : Heuristicly Guided Traversal: Maximum of Minimum Interval First \n"
-              " \t\t\t 4  : Heuristicly Guided Traversal: Maximum Adjusted Volume First \n"
-              " \t\t\t 5  : Heuristicly Guided Traversal: Maximum of Adjusted Minimum Volume First \n"
-           << endl;
     return 0;
 }
 
-static int parse_args(char *buffer)
+static void parse_args(int argc, char* argv[])
 {
-    /*
-        get argc and argv
-    */
-    int argc = 1;
-    char **argv;
     int i = 0;
-    // get argc
-    while (buffer[i])
-    {
-        if (buffer[i] == ' ')
-        {
-            ++argc;
-        }
-        ++i;
-    }
-    // get argv
-    char *rest = buffer;
-    char *token = NULL;
-    argv = (char **)malloc((sizeof(char *) * argc));
-    i = 0;
-    while ((token = strtok_r(rest, " ", &rest)) && i < argc)
-    {
-        argv[i] = (char *)malloc(sizeof(char) * (strlen(token) + 1));
-        strcpy(argv[i], token);
-        ++i;
-    }
-
     if (argc == 1)
     {
         usage();
-        return -1;
+        return;
     }
 
     i = 1;
@@ -273,7 +221,7 @@ static int parse_args(char *buffer)
         if (strcmp("-h", argv[i]) == 0)
         {
             usage();
-            return -1;
+            return;
         }
         if (strcmp("-d", argv[i]) == 0)
         {
@@ -349,25 +297,11 @@ static int parse_args(char *buffer)
             filename = argv[i++];
         }
     }
-    if (!testfilename)
-    {
-        cout << "Please provide a test file : -test <testfilename> " << endl;
-        //	exit(0);
-        result << "Please provide a test file : -test <testfilename> " << endl;
-    }
-    return 0;
 }
 
-static int grail(char *buffer, int sockfd)
+static int grail(int sockfd)
 {
     signal(SIGALRM, handle);
-
-    int ret = parse_args(buffer);
-    if (ret == -1)
-    {
-        send(sockfd, result.str().c_str(), result.str().size(), 0);
-        return -1;
-    }
     /*
 		Read Graph from the input file	
      */
@@ -375,15 +309,13 @@ static int grail(char *buffer, int sockfd)
     if (!infile)
     {
         cout << "Error: Cannot open " << filename << endl;
-        result << "Error: Cannot open " << filename << endl;
-        send(sockfd, result.str().c_str(), result.str().size(), 0);
         return -1;
     }
 
     Graph g(infile);
     infile.close();
+
     cout << "#vertex size:" << g.num_vertices() << "\t#edges size:" << g.num_edges() << endl;
-    result << "#vertex size:" << g.num_vertices() << "\t#edges size:" << g.num_edges() << endl;
 
     int s, t, num_reachable = 0;
     int left = 0;
@@ -400,24 +332,20 @@ static int grail(char *buffer, int sockfd)
 
         // merge strongly connectionected component
         cout << "merging strongly connectionected component..." << endl;
-        result << "merging strongly connectionected component..." << endl;
         gettimeofday(&before_time, NULL);
         GraphUtil::mergeSCC(g, sccmap, reverse_topo_sort);
         gettimeofday(&after_time, NULL);
         query_time = (after_time.tv_sec - before_time.tv_sec) * 1000.0 +
                      (after_time.tv_usec - before_time.tv_usec) * 1.0 / 1000.0;
         cout << "merging time:" << query_time << " (ms)" << endl;
-        result << "merging time:" << query_time << " (ms)" << endl;
         cout << "#DAG vertex size:" << g.num_vertices() << "\t#DAG edges size:" << g.num_edges() << endl;
-        result << "#DAG vertex size:" << g.num_vertices() << "\t#DAG edges size:" << g.num_edges() << endl;
     }
 
     GraphUtil::topo_leveler(g);
 
     // prepare queries
     srand48(time(NULL));
-    cout << "preparing " << query_num << " queries..." << endl;
-    result << "preparing " << query_num << " queries..." << endl;
+    cout << "Waiting for queries..." << endl;
     vector<int> src;
     vector<int> trg;
     vector<int> labels;
@@ -426,12 +354,30 @@ static int grail(char *buffer, int sockfd)
     int label;
     if (testfilename == NULL)
     {
-        while (left < query_num)
+        char query[BUFFER_SIZE];
+        while(1)
         {
-            s = lrand48() % gsize;
-            t = lrand48() % gsize;
-            if (s == t)
-                continue;
+            memset(query, 0, sizeof(query));
+            int len = recv(sockfd, query, sizeof(query), 0);
+            if (strcmp(query, "exit\n") == 0)
+            {
+                cout << "child process: " << getpid() << " exited." << endl;
+                close(sockfd);
+                return 0;
+            }
+            else if (strcmp(query, "over\n") == 0)
+            {
+                cout << "received all queries." << endl;
+                break;
+            }
+            cout << "pid:" << getpid() << " receive." << endl;
+            char *rest = query;
+            char *token = NULL;
+            token = strtok_r(rest, " ", &rest);
+            s = atoi(token);
+            token = strtok_r(rest, " ", &rest);
+            t = atoi(token);
+            cout << "s: " << s << "\tt: " << t << endl;
             src.push_back(s);
             trg.push_back(t);
             ++left;
@@ -448,9 +394,7 @@ static int grail(char *buffer, int sockfd)
             labels.push_back(label);
         }
     }
-
     cout << "queries are ready" << endl;
-    result << "queries are ready" << endl;
     gettimeofday(&before_time, NULL);
     Grail grail(g, DIM, LABELINGTYPE, POOL, POOLSIZE);
     grail.set_level_filter(LEVEL_FILTER);
@@ -459,7 +403,6 @@ static int grail(char *buffer, int sockfd)
     labeling_time = (after_time.tv_sec - before_time.tv_sec) * 1000.0 +
                     (after_time.tv_usec - before_time.tv_usec) * 1.0 / 1000.0;
     cout << "#construction time:" << labeling_time << " (ms)" << endl;
-    result << "#construction time:" << labeling_time << " (ms)" << endl;
     ExceptionList *el = NULL;
     exceptionlist_time = 0;
     if (UseExceptions)
@@ -470,14 +413,13 @@ static int grail(char *buffer, int sockfd)
         exceptionlist_time = (after_time.tv_sec - before_time.tv_sec) * 1000.0 +
                              (after_time.tv_usec - before_time.tv_usec) * 1.0 / 1000.0;
         cout << "exceptionlist time:" << exceptionlist_time << " (ms)" << endl;
-        result << "exceptionlist time:" << exceptionlist_time << " (ms)" << endl;
     }
 
     // process queries
     cout << "process queries..." << endl;
-    result << "process queries..." << endl;
     gettimeofday(&before_time, NULL);
-
+#pragma omp parallel num_threads(THREAD_COUNT)
+#pragma omp parallel for
     for (sit = src.begin(), tit = trg.begin(), lit = labels.begin(); sit != src.end(); ++sit, ++tit /*, ++lit*/)
     {
         if (!SKIPSCC)
@@ -520,24 +462,28 @@ static int grail(char *buffer, int sockfd)
             break;
         }
         if (r)
+        {
             num_reachable++;
+            send(sockfd, "True", sizeof("True"), 0);
+            sleep(1);
+        }
+        else
+        {
+            send(sockfd, "False", sizeof("False"), 0);
+            sleep(1);
+        }
     }
-
+    send(sockfd, "over", sizeof("over"), 0);
+    sleep(1);
     gettimeofday(&after_time, NULL);
     query_time = (after_time.tv_sec - before_time.tv_sec) * 1000.0 +
                  (after_time.tv_usec - before_time.tv_usec) * 1.0 / 1000.0;
     cout << "#total query running time:" << query_time << " (ms)" << endl;
-    result << "#total query running time:" << query_time << " (ms)" << endl;
     cout.setf(ios::fixed);
-    result.setf(ios::fixed);
     cout.precision(2);
-    result.precision(2);
     cout << "GRAIL REPORT " << endl;
-    result << "GRAIL REPORT " << endl;
     cout << "filename = " << filename << "\t testfilename = " << (testfilename ? testfilename : "Random") << "\t DIM = " << DIM << endl;
-    result << "filename = " << filename << "\t testfilename = " << (testfilename ? testfilename : "Random") << "\t DIM = " << DIM << endl;
     cout << "Labeling_time = " << labeling_time + exceptionlist_time << "\t Query_Time = " << query_time << "\t Index_Size = " << gsize * DIM * 2 << "\t Mem_Usage = " << print_mem_usage() << " MB" << endl;
-    result << "Labeling_time = " << labeling_time + exceptionlist_time << "\t Query_Time = " << query_time << "\t Index_Size = " << gsize * DIM * 2 << "\t Mem_Usage = " << print_mem_usage() << " MB" << endl;
 
     const char *alg_name;
 
@@ -605,40 +551,5 @@ static int grail(char *buffer, int sockfd)
          << grail.NegativeCut << "\t"
          << num_reachable << "\t"
          << "AvgCut:" << (grail.TotalDepth / grail.PositiveCut) << endl;
-    result << "COMPAR: "
-           << alg_name << DIM << "\t"
-           << labeling_time + exceptionlist_time << "\t"
-           << query_time << "\t"
-           << totalIndexSize << "\t"
-           << print_mem_usage() << "\t"
-           << grail.TotalCall << "\t"
-           << grail.PositiveCut << "\t"
-           << grail.NegativeCut << "\t"
-           << num_reachable << "\t"
-           << "AvgCut:" << (grail.TotalDepth / grail.PositiveCut) << endl;
-    send(sockfd, result.str().c_str(), result.str().size(), 0);
     return 0;
-}
-
-/*
-create connectionection
-*/
-static void reply_echo(int sockfd)
-{
-    char buffer[BUFFER_SIZE];
-    pid_t pid = getpid();
-    while (1)
-    {
-        memset(buffer, 0, sizeof(buffer));
-        int len = recv(sockfd, buffer, sizeof(buffer), 0);
-        if (strcmp(buffer, "exit\n") == 0)
-        {
-            cout << "child process: " << pid << " exited." << endl;
-            break;
-        }
-        cout << "pid:" << pid << " receive." << endl;
-        cout << "Querying..." << endl;
-        grail(buffer, sockfd);  //buffer == argv, data will be reply in grail
-    }
-    close(sockfd);
 }
